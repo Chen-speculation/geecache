@@ -1,0 +1,31 @@
+版本：v0.2
+
+# 功能
+- 日志模块使用第三方库`logrus`实现
+# 介绍
+## utils包
+- 配置了logrus库，用于框架日志记录
+## lru包
+- 使用map和标准库双向链表实现了并发不安去的LRU缓存淘汰机制
+- 同时规定了缓存的value必须实现接口Value
+  - Value接口只有一个方法Len()int，功能是返回缓存数据占字节数
+- 同时定义了entry，这个保存的是缓存的(key,value)，是LRU算法的需要
+## gee_cache包(已经将它拆分出了一个cache包)
+### byte_view文件
+- 定义了ByteView，它具有只读属性，保存了缓存数据的[]byte
+  - 这也表明，该缓存可以缓存图片等
+### gee_cache文件
+- 它整合了lru文件的lru算法，通过加入`sync.Mutex`锁，保证lru算法是并发安全的
+  - 它的方法都是指针的，这是确保`sync.Mutex`对象不会因为值拷贝而失效
+- 它的cacheBytes记录了该缓存的最大值
+### getter文件
+- 它里面是一个Getter接口，和一个GetterFunc的函数命名类型，模仿了http.HandleFunc实现http.Handler接口
+- 它的作用是，当group里面的缓存找不到的时候，使用这个回调函数去寻找。
+  - 如果找到了，加入当前缓存中去
+  - 如果找不到，就按照回调函数返回的结果进行返回
+### utils文件
+- 目前里面只有一个实现[]byte深拷贝的工具函数
+### group文件
+- 有group命名空间
+- 可以调用回调函数
+- mainCache没有使用指针，但是group使用了指针，同时groups这个map保存的是*group，所以不使用也没事
